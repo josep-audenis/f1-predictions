@@ -1,6 +1,10 @@
 .venv
 .vscode
-f1_cache
+
+*.csv
+*.ff1pkl
+*.sqlite
+
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
