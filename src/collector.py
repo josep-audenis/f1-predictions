@@ -16,32 +16,36 @@ def get_race_data(year: int, grand_prix: str):
     try:
         session = fastf1.get_session(year, grand_prix, "R")
         session.load(laps=True, telemetry=False, weather=True, messages=False)
+        laps = session.laps
+        results = session.results
+
+        laps["Year"] = year
+        laps["GrandPrix"] = grand_prix
+        results["Year"] = year
+        results["GrandPrix"] = grand_prix
+
     except Exception as e:
         print(f"ERROR: Failed to load {grand_prix} {year}: {e}")
         return None, None
     
-    laps = session.laps
-    results = session.results
-
-    laps["Year"] = year
-    laps["GrandPrix"] = grand_prix
-    results["Year"] = year
-    results["GrandPrix"] = grand_prix
-
     return laps, results
 
 
 def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR):    
     save_dir.mkdir(parents=True, exist_ok=True)
 
-    calendar = fastf1.get_event_schedule(year)
-    
+    try:
+        calendar = fastf1.get_event_schedule(year)
+    except Exception as e:
+        print(f"ERROR: Failed to load {year} schedule: {e}")
+        return
+
     laps_all = []
     results_all = []
 
     print(f"Collecting data for {year} season...")
     for gp in calendar["EventName"]:
-        print(" - {gp}")
+        print(f" - {gp}")
         laps, results = get_race_data(year, gp)
         if laps is not None:
             laps_all.append(laps)
@@ -53,7 +57,7 @@ def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR):
     if results_all:
         pd.concat(results_all).to_csv(os.path.join(save_dir, f"results_{year}.csv"), index=False)
 
-    print("Saved data for {year} season")
+    print(f"Saved data for {year} season")
 
 
 def collect_multi_year(start: int = 2021, end: int = 2024):
@@ -63,4 +67,4 @@ def collect_multi_year(start: int = 2021, end: int = 2024):
 
 if __name__ == "__main__":
     print("Exctracting data")
-    collect_multi_year()
+    collect_multi_year(2015, 2025)
