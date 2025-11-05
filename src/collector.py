@@ -53,7 +53,7 @@ def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR):
             results_all.append(results)
 
     if laps_all:
-        pd.concat(laps_all).to_csv(os.path.join(save_dir, f"laps{year}.csv"), index=False)
+        pd.concat(laps_all).to_csv(os.path.join(save_dir, f"laps_{year}.csv"), index=False)
     if results_all:
         pd.concat(results_all).to_csv(os.path.join(save_dir, f"results_{year}.csv"), index=False)
 
