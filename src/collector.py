@@ -60,11 +60,11 @@ def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR):
     print(f"Saved data for {year} season")
 
 
-def collect_multi_year(start: int = 2021, end: int = 2024):
+def collect_multi_year(start: int = 2018, end: int = 2025):
     for year in range(start, end + 1):
         collect_season_data(year)
 
 
 if __name__ == "__main__":
     print("Exctracting data")
-    collect_multi_year(2015, 2025)
+    collect_multi_year(2018, 2025)
