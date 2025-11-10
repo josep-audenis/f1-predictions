@@ -1,12 +1,12 @@
 import pandas as pd
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" / "processed"
+DATA_DIR = Path(__file__).resolve().parent.parent / "data" 
 
 def load_data(year: int):
 
-    laps_path = DATA_DIR / f"laps_{year}.csv"
-    results_path = DATA_DIR / f"results_{year}.csv"
+    laps_path = DATA_DIR / "raw" / "laps" / f"laps_{year}.csv"
+    results_path = DATA_DIR / "raw" / "results" / f"results_{year}.csv"
 
     laps = pd.read_csv(laps_path)
     results = pd.read_csv(results_path)
@@ -64,7 +64,7 @@ def build_driver_features(year: int):
 def build_full_dataset(start_year: int, end_year: int):
     all_years = [build_driver_features(y) for y in range(start_year, end_year + 1)]
     df = pd.concat(all_years, ignore_index=True)
-    df.to_csv(DATA_DIR / "driver_features.csv", index=False)
+    df.to_csv(DATA_DIR / "processed" / "driver_features.csv", index=False)
     print(f"Saved combined dataset with {len(df)} rows.")
 
 if __name__ == "__main__":

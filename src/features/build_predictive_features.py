@@ -4,8 +4,8 @@ import numpy as np
 from pathlib import Path
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DATA_DIR = os.path.join(BASE_DIR, "..", "data", "processed")
-OUTPUT_PATH = os.path.join(BASE_DIR, "..", "data", "processed", "features_pre_race.csv")
+DATA_DIR = os.path.join(BASE_DIR, "..", "..", "data", "processed")
+OUTPUT_PATH = os.path.join(BASE_DIR, "..", "..", "data", "processed", "features_pre_race.csv")
 
 def load_all_csvs(folder: str) -> pd.DataFrame:
     base_path = Path(__file__).resolve().parent
@@ -13,7 +13,7 @@ def load_all_csvs(folder: str) -> pd.DataFrame:
 
     all_dfs = []
     for file in sorted(folder_path.glob("*.csv")):
-        if any(year in file.name for year in ["2025", "2024"]):
+        if any(year in file.name for year in ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"]):
             print(f"Loading {file.name} ...")
             df = pd.read_csv(file)
             all_dfs.append(df)
@@ -34,8 +34,8 @@ def rolling_stat(df: pd.DataFrame, group_cols, target_col, window, func) -> pd.D
 
 def build_features(window=5):
 
-    results = load_all_csvs("../data/raw/results")
-    laps = load_all_csvs("../data/raw/laps")
+    results = load_all_csvs("../../data/raw/results")
+    laps = load_all_csvs("../../data/raw/laps")
 
     results["Year"] = results["Year"].astype(int)
     laps["Year"] = laps["Year"].astype(int)
