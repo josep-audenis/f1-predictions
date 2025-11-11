@@ -34,7 +34,7 @@ def preprocess(df):
         df[col] = le.fit_transform(df[col].astype(str))
     
     # y_col = "ClassifiedPosition" if "ClassifiedPosition" in df.columns else "Position"
-    X = df.drop(columns=["Position"], errors="ignore")
+    X = df.drop(columns=["Position", "grid_position", "is_top10_start", "grid_vs_team_avg", "driver_vag_quali_last5", "team_avg_quali_last_5"], errors="ignore")
     y = df["Position"].apply(lambda x: 1 if x <= 3 else 0)
     
     scaler = StandardScaler()
@@ -93,7 +93,7 @@ def main():
             X_test, y_test = X_2025, y_2025
             final_results[tag] = evaluate_models(X_train, X_test, y_train, y_test)
 
-    with open(OUTPUT_DIR / "model_performance.json", "w") as f:
+    with open(OUTPUT_DIR / "model_performance_top3_pre_quali.json", "w") as f:
         json.dump(final_results, f, indent=4)
 
     print("\nResults saved to model_performance.json")
