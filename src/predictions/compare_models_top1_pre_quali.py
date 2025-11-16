@@ -1,28 +1,19 @@
-import pandas as pd
-import numpy as np
 import os
-import glob
+import sys
 import json
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder, StandardScaler
-from sklearn.metrics import accuracy_score, f1_score, top_k_accuracy_score
-from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
-from sklearn.linear_model import LogisticRegression
-from sklearn.neural_network import MLPClassifier
-from sklearn.svm import SVC
-from xgboost import XGBClassifier
 from pathlib import Path
+
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+
+from utils.data_utils import load_features_pre_race
+from utils.model_utils import evaluate_models
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = Path(__file__).resolve().parent.parent / ".." / "data" / "processed"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / ".." / "data" / "processed"
-
-def load_datasets():
-    dataframes = {}
-    for year in ["2018", "2019", "2020", "2021", "2022", "2023", "2024", "2025"]:
-        df = pd.read_csv(DATA_DIR / f"features_pre_race_{year}-2025.csv")
-        dataframes[year] = df
-    return dataframes
+MODEL_DIR = Path(__file__).resolve().parent.parent / ".." / "models" / "top1" / "pre-quali"
 
 def preprocess(df):
     df = df.copy()
@@ -39,59 +30,20 @@ def preprocess(df):
     
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
-    print(X)
     return X_scaled, y
 
-def evaluate_models(X_train, X_test, y_train, y_test):
-    models = {
-        "LogisticRegression": LogisticRegression(max_iter=1000),
-        "RandomForest": RandomForestClassifier(n_estimators=200, n_jobs=-1),
-        "GradientBoosting": GradientBoostingClassifier(),
-        "XGBoost": XGBClassifier(use_label_encoder=False, eval_metric='mlogloss', n_jobs=-1),
-        "SVC": SVC(probability=True),
-        "MLP": MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500)
-    }
-    
-    results = {}
-    for name, model in models.items():
-        model.fit(X_train, y_train)
-        preds = model.predict(X_test)
-        probs = model.predict_proba(X_test) if hasattr(model, "predict_proba") else None
-
-        acc = accuracy_score(y_test, preds)
-        f1_macro = f1_score(y_test, preds, average="macro")
-        f1_weighted = f1_score(y_test, preds, average="weighted")
-        # top3 = top_k_accuracy_score(y_test, probs, k=3) if probs is not None else None
-
-        results[name] = {
-            "accuracy": acc,
-            "f1_macro": f1_macro,
-            "f1_weighted": f1_weighted,
-            # "top3_accuracy": top3
-        }
-        print(f"{name} done: acc={acc:.3f}, f1_macro={f1_macro:.3f}") # , top3={top3:.3f if top3 else 0.0}
-    return results
 
 def main():
-    all_data = load_datasets()
+    all_data = load_features_pre_race(DATA_DIR)
     print(f"Found {len(all_data)} datasets: {list(all_data.keys())}")
-
-    if "2025" not in all_data:
-        raise ValueError("No dataset named 'features_pre_race_2025.csv' found.")
-    X_2025, y_2025 = preprocess(all_data["2025"])
 
     final_results = {}
 
     for tag, df in all_data.items():
         print(f"\nEvaluating dataset: {tag}")
-        if tag == "2025":
-            X, y = preprocess(df)
-            X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
-            final_results[tag] = evaluate_models(X_train, X_test, y_train, y_test)
-        else:
-            X_train, y_train = preprocess(df)
-            X_test, y_test = X_2025, y_2025
-            final_results[tag] = evaluate_models(X_train, X_test, y_train, y_test)
+        X, y = preprocess(df)
+        X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
+        final_results[tag] = evaluate_models(X_train, X_test, y_train, y_test, X, y, MODEL_DIR, prefix=f"{tag}_top1_pre-quali")
 
     with open(OUTPUT_DIR / "model_performance_top1_pre_quali.json", "w") as f:
         json.dump(final_results, f, indent=4)

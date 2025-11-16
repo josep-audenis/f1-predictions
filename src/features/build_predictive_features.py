@@ -5,15 +5,15 @@ from pathlib import Path
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "..", "data", "processed")
-OUTPUT_PATH = os.path.join(BASE_DIR, "..", "..", "data", "processed", "features_pre_race.csv")
+OUTPUT_PATH = os.path.join(BASE_DIR, "..", "..", "data", "processed")
 
-def load_all_csvs(folder: str) -> pd.DataFrame:
+def load_all_csvs(folder: str, start: int = 2018, end: int = 2025) -> pd.DataFrame:
     base_path = Path(__file__).resolve().parent
     folder_path = base_path / folder
 
     all_dfs = []
     for file in sorted(folder_path.glob("*.csv")):
-        if any(year in file.name for year in ["2025", "2024", "2023", "2022", "2021", "2020", "2019", "2018"]):
+        if any(year in file.name for year in str(range(start, end+1))):
             print(f"Loading {file.name} ...")
             df = pd.read_csv(file)
             all_dfs.append(df)
@@ -32,10 +32,10 @@ def rolling_stat(df: pd.DataFrame, group_cols, target_col, window, func) -> pd.D
     )
     return result
 
-def build_features(window=5):
+def build_features(start: int = 2018, end: int = 2025, window: int = 5):
 
-    results = load_all_csvs("../../data/raw/results")
-    laps = load_all_csvs("../../data/raw/laps")
+    results = load_all_csvs("../../data/raw/results", start=start, end=end)
+    laps = load_all_csvs("../../data/raw/laps", start=start, end=end)
 
     results["Year"] = results["Year"].astype(int)
     laps["Year"] = laps["Year"].astype(int)
@@ -94,7 +94,7 @@ def build_features(window=5):
     ]
 
     df_final = results[feature_cols]
-    df_final.to_csv(OUTPUT_PATH, index=False)
+    df_final.to_csv(os.path.join(OUTPUT_PATH, f"features_pre_race_{start}-{end}.csv"), index=False)
     print(f"Saved features to {OUTPUT_PATH}.")
 
     return df_final
@@ -102,4 +102,12 @@ def build_features(window=5):
 
 
 if __name__ == "__main__":
-    build_features()
+    
+    start = 2018 
+    end = 2025
+    assert start > 2017, "[WARNING] FastF1API only has detailed data from 2018"
+    
+
+
+    for i in range(start, end + 1):
+        build_features(start=i, end=end)

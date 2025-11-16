@@ -5,3 +5,4 @@
 *.ff1pkl
 *.sqlite
 *.json
+*.joblib

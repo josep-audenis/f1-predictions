@@ -68,4 +68,4 @@ def build_full_dataset(start_year: int, end_year: int):
     print(f"Saved combined dataset with {len(df)} rows.")
 
 if __name__ == "__main__":
-    build_full_dataset(2018, 2025)
+    build_full_dataset(start_year=2018, end_year=2025)
