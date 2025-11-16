@@ -3,3 +3,4 @@ numpy
 sickit-learn
 xgboost
 joblib
+seaborn

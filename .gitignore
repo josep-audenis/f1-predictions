@@ -6,5 +6,6 @@
 *.sqlite
 *.json
 *.joblib
+*.npy
 
 __pycache__

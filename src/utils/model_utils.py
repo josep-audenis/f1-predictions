@@ -1,13 +1,11 @@
+import numpy as np
 import joblib
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import LabelEncoder, StandardScaler
 from sklearn.metrics import accuracy_score, f1_score, top_k_accuracy_score
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
 from sklearn.svm import SVC
 from xgboost import XGBClassifier
-from pathlib import Path
 
 
 def evaluate_models(X_train, X_test, y_train, y_test, X_full, y_full, model_dir, prefix=None):
@@ -29,22 +27,28 @@ def evaluate_models(X_train, X_test, y_train, y_test, X_full, y_full, model_dir,
         if prefix is not None:
             final_model = models[name]
             final_model.fit(X_full, y_full)
-
             model_path = model_dir / f"{prefix}_{name}.joblib"
             joblib.dump(final_model, model_path)
-            print(f"Saved FULL model in {model_path}")
+
+            feature_importances = None
+            if hasattr(final_model, "feature_importances_"):
+                feature_importances = final_model.feature_importances_
+            elif hasattr(final_model, "coef_"):
+                feature_importances = np.abs(final_model.coef_).mean(axis=0)
+
+            if feature_importances is not None:
+                fi_path = model_dir / f"{prefix}_{name}_feature_importance.npy"
+                np.save(fi_path, feature_importances)
 
         acc = accuracy_score(y_test, preds)
         f1_macro = f1_score(y_test, preds, average="macro")
         f1_weighted = f1_score(y_test, preds, average="weighted")
-        # top3 = top_k_accuracy_score(y_test, probs, k=3) if probs is not None else None
 
         results[name] = {
             "accuracy": acc,
             "f1_macro": f1_macro,
             "f1_weighted": f1_weighted,
-            # "top3_accuracy": top3
         }
-        print(f"{name} done: acc={acc:.3f}, f1_macro={f1_macro:.3f}") # , top3={top3:.3f if top3 else 0.0}
+        print(f"{name} done: acc={acc:.3f}, f1_macro={f1_macro:.3f}")
 
     return results
