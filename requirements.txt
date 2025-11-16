@@ -1,6 +1,7 @@
 pandas
 numpy
-sickit-learn
+scikit-learn
 xgboost
 joblib
 seaborn
+fastf1

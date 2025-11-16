@@ -11,6 +11,9 @@ PROCESSED_DIR = DATA_DIR / "processed"
 
 fastf1.Cache.enable_cache(str(RAW_DIR))
 
+# TODO: modularize all this
+# TODO: change this file name
+# TODO: put in a folder (modularized) 
 
 def get_race_data(year: int, grand_prix: str):
     try:

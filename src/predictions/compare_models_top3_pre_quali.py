@@ -15,7 +15,7 @@ DATA_DIR = Path(__file__).resolve().parent.parent / ".." / "data" / "processed"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent / ".." / "data" / "processed"
 MODEL_DIR = Path(__file__).resolve().parent.parent / ".." / "models" / "top3" / "pre-quali"
 
-def preprocess(df):
+def preprocess(df): # TODO: modularize this
     df = df.copy()
     df = df.dropna(axis=1, how='all')
     df = df.fillna(df.mean(numeric_only=True))

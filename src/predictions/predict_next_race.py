@@ -20,7 +20,7 @@ RACE_CALENDAR = {
 }
 
 
-def next_race():
+def next_race():    # TODO: get from fastf1 api
     today = datetime.today().date()
     future_races = []
 
