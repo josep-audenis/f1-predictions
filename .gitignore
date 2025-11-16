@@ -6,3 +6,5 @@
 *.sqlite
 *.json
 *.joblib
+
+__pycache__
