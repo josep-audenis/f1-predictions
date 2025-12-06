@@ -1,19 +1,16 @@
-import fastf1
 import os
 import pandas as pd
 from pathlib import Path
+import fastf1
 
-BASE_DIR = Path(__file__).resolve().parent
-DATA_DIR = BASE_DIR.parent / "data"
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DATA_DIR = BASE_DIR / "data"
 
 RAW_DIR = DATA_DIR / "raw"
+CACHE_DIR = DATA_DIR / "cache"
 PROCESSED_DIR = DATA_DIR / "processed"
 
-fastf1.Cache.enable_cache(str(RAW_DIR))
-
-# TODO: modularize all this
-# TODO: change this file name
-# TODO: put in a folder (modularized) 
+fastf1.Cache.enable_cache(str(CACHE_DIR))
 
 def get_race_data(year: int, grand_prix: str):
     try:
@@ -61,13 +58,3 @@ def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR):
         pd.concat(results_all).to_csv(os.path.join(save_dir, f"results_{year}.csv"), index=False)
 
     print(f"Saved data for {year} season")
-
-
-def collect_multi_year(start: int = 2018, end: int = 2025):
-    for year in range(start, end + 1):
-        collect_season_data(year)
-
-
-if __name__ == "__main__":
-    print("Exctracting data")
-    collect_multi_year(2018, 2025)

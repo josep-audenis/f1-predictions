@@ -7,5 +7,7 @@
 *.json
 *.joblib
 *.npy
+*.pkl
+
 
 __pycache__
