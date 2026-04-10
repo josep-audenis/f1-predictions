@@ -8,4 +8,6 @@
 *.joblib
 *.npy
 
+CLAUDE.md
+BUGS.md
 __pycache__

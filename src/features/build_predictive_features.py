@@ -1,4 +1,5 @@
 import os
+import fastf1
 import pandas as pd
 import numpy as np
 from pathlib import Path
@@ -6,6 +7,17 @@ from pathlib import Path
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "..", "data", "processed")
 OUTPUT_PATH = os.path.join(BASE_DIR, "..", "..", "data", "processed")
+
+
+def build_round_number_map(years):
+    """Return a DataFrame mapping (Year, GrandPrix) -> RoundNumber using FastF1 calendar."""
+    rows = []
+    for year in years:
+        schedule = fastf1.get_event_schedule(year, include_testing=False)
+        for _, event in schedule.iterrows():
+            gp_name = event["EventName"].replace("Grand Prix", "").strip()
+            rows.append({"Year": year, "GrandPrix": gp_name, "RoundNumber": int(event["RoundNumber"])})
+    return pd.DataFrame(rows)
 
 def load_all_csvs(folder: str, start: int = 2018, end: int = 2025) -> pd.DataFrame:
     base_path = Path(__file__).resolve().parent
@@ -25,7 +37,7 @@ def load_all_csvs(folder: str, start: int = 2018, end: int = 2025) -> pd.DataFra
 
 
 def rolling_stat(df: pd.DataFrame, group_cols, target_col, window, func) -> pd.DataFrame:
-    df = df.sort_values(["Year", "GrandPrix"])
+    df = df.sort_values(["Year", "RoundNumber"])
     result = (
         df.groupby(group_cols, group_keys=False)[target_col]
         .apply(lambda x: x.shift(1).rolling(window, min_periods=1).agg(func))
@@ -41,7 +53,11 @@ def build_features(start: int = 2018, end: int = 2025, window: int = 5):
     laps["Year"] = laps["Year"].astype(int)
 
     results = results.dropna(subset=["DriverId", "GrandPrix"])
-    results = results.sort_values(["Year", "GrandPrix", "DriverId"])
+
+    round_map = build_round_number_map(range(start, end + 1))
+    results = results.merge(round_map, on=["Year", "GrandPrix"], how="left")
+
+    results = results.sort_values(["Year", "RoundNumber", "DriverId"])
 
     results.rename(columns={"FullName": "Driver"}, inplace=True)
 
