@@ -7,6 +7,8 @@
 *.json
 *.joblib
 *.npy
+*.pkl
+
 
 CLAUDE.md
 BUGS.md

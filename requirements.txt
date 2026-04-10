@@ -5,3 +5,7 @@ xgboost
 joblib
 seaborn
 fastf1
+fastapi
+uvicorn
+pydantic
+pydantic-settings
