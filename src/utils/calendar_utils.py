@@ -38,7 +38,7 @@ def get_next_race(today=None):
     next_event = min(future_events, key=lambda e: e["Race"])
 
     quali_time = next_event["Quali"]
-    has_quali = today >= quali_time
+    has_quali = today > quali_time
 
     return {
         "year": year,

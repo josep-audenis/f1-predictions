@@ -1,6 +1,7 @@
 import numpy as np
 import joblib
-from sklearn.metrics import accuracy_score, f1_score, top_k_accuracy_score
+from sklearn.metrics import accuracy_score, f1_score
+from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
 from sklearn.linear_model import LogisticRegression
 from sklearn.neural_network import MLPClassifier
@@ -17,15 +18,26 @@ def evaluate_models(X_train, X_test, y_train, y_test, X_full, y_full, model_dir,
         "SVC": SVC(probability=True),
         "MLP": MLPClassifier(hidden_layer_sizes=(64, 32), max_iter=500)
     }
-    
+
     results = {}
     for name, model in models.items():
+        # Evaluate on the held-out test split
         model.fit(X_train, y_train)
         preds = model.predict(X_test)
-        probs = model.predict_proba(X_test) if hasattr(model, "predict_proba") else None
+
+        acc = accuracy_score(y_test, preds)
+        f1_macro = f1_score(y_test, preds, average="macro")
+        f1_weighted = f1_score(y_test, preds, average="weighted")
+
+        result = {
+            "accuracy": acc,
+            "f1_macro": f1_macro,
+            "f1_weighted": f1_weighted,
+        }
 
         if prefix is not None:
-            final_model = models[name]
+            # Train a fresh instance on all data — this is what gets saved
+            final_model = type(model)(**model.get_params())
             final_model.fit(X_full, y_full)
             model_path = model_dir / f"{prefix}_{name}.joblib"
             joblib.dump(final_model, model_path)
@@ -40,15 +52,15 @@ def evaluate_models(X_train, X_test, y_train, y_test, X_full, y_full, model_dir,
                 fi_path = model_dir / f"{prefix}_{name}_feature_importance.npy"
                 np.save(fi_path, feature_importances)
 
-        acc = accuracy_score(y_test, preds)
-        f1_macro = f1_score(y_test, preds, average="macro")
-        f1_weighted = f1_score(y_test, preds, average="weighted")
+            # Cross-validate a fresh instance on the full dataset to produce
+            # metrics that represent the saved model (trained on all data)
+            cv_model = type(model)(**model.get_params())
+            cv_scores = cross_val_score(cv_model, X_full, y_full, cv=5, scoring="accuracy", n_jobs=-1)
+            result["cv_accuracy_mean"] = float(cv_scores.mean())
+            result["cv_accuracy_std"] = float(cv_scores.std())
 
-        results[name] = {
-            "accuracy": acc,
-            "f1_macro": f1_macro,
-            "f1_weighted": f1_weighted,
-        }
-        print(f"{name} done: acc={acc:.3f}, f1_macro={f1_macro:.3f}")
+        results[name] = result
+        cv_str = f", cv_acc={result['cv_accuracy_mean']:.3f}±{result['cv_accuracy_std']:.3f}" if "cv_accuracy_mean" in result else ""
+        print(f"{name} done: acc={acc:.3f}, f1_macro={f1_macro:.3f}{cv_str}")
 
     return results

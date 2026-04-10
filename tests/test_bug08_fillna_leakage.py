@@ -173,7 +173,7 @@ class TestPrepareFeaturesFillMean:
         df = self.make_race_df()
         training_mean = pd.Series({"driver_avg_finish_last5": 999.0})
 
-        X, _, _ = pnr.prepare_features(df, use_quali_features=True, fill_mean=training_mean)
+        X = pnr.prepare_features(df, use_quali_features=True, fill_mean=training_mean)
         # We can't directly inspect the filled values from the scaled output,
         # but we can verify no exception was raised and shape is correct.
         assert X.shape[0] == len(df)
@@ -181,5 +181,5 @@ class TestPrepareFeaturesFillMean:
     def test_fill_mean_none_falls_back_to_df_mean(self):
         """When fill_mean is None, the function must still work (legacy fallback)."""
         df = self.make_race_df()
-        X, _, _ = pnr.prepare_features(df, use_quali_features=True, fill_mean=None)
+        X = pnr.prepare_features(df, use_quali_features=True, fill_mean=None)
         assert X.shape[0] == len(df)
