@@ -43,9 +43,18 @@ def load_features_for_race(year="2025"):
     return pd.read_csv(DATA_DIR / f"features_pre_race_{year}-2025.csv")
 
 
-def prepare_features(df, use_quali_features=True):
+def prepare_features(df, use_quali_features=True, fill_mean=None):
+    """Prepare features for inference.
+
+    fill_mean: optional Series of column means from the training set.  When
+    provided it is used for NaN imputation instead of the race-day mean,
+    preventing the imputed value from depending on other drivers in the same
+    race.  If None, falls back to the mean of the supplied DataFrame (legacy
+    behaviour; ideally the training mean should be saved alongside the model).
+    """
     df = df.copy()
-    df = df.fillna(df.mean(numeric_only=True))
+    impute_mean = fill_mean if fill_mean is not None else df.mean(numeric_only=True)
+    df = df.fillna(impute_mean)
 
     cat_cols = ["TeamName", "GrandPrix", "Driver"]
     for col in cat_cols:
@@ -73,17 +82,21 @@ def prepare_features(df, use_quali_features=True):
 
 def load_best_model(quali):
     if quali:
-        path = DATA_DIR / "model_performance_top1_quali.json"
+        perf_path = DATA_DIR / "model_performance_top1_quali.json"
+        model_dir = BASE_DIR / ".." / "models" / "top1" / "quali"
+        task_prefix = "top1_quali"
     else:
-        path = DATA_DIR / "model_performance_top1_pre_quali.json"
+        perf_path = DATA_DIR / "model_performance_top1_pre_quali.json"
+        model_dir = BASE_DIR / ".." / "models" / "top1" / "pre-quali"
+        task_prefix = "top1_pre-quali"
 
-    with open(path, "r") as f:
+    with open(perf_path, "r") as f:
         perf = json.load(f)
 
     best_year = max(perf.keys())
     best_model_name = max(perf[best_year], key=lambda m: perf[best_year][m]["accuracy"])
 
-    model_path = DATA_DIR / f"{best_model_name}_model.pkl"
+    model_path = model_dir / f"{best_year}_{task_prefix}_{best_model_name}.joblib"
     return joblib.load(model_path)
 
 

@@ -36,8 +36,8 @@ def extract_lap_features(laps: pd.DataFrame) -> pd.DataFrame:
         "SpeedI1": "avg_speed",
         "SpeedFL": "max_speed",
         "IsAccurate": "data_accuracy",
-        "Compund": "dominant_compound",
-        "String": "stint_count",
+        "Compound": "dominant_compound",
+        "Stint": "stint_count",
         "LapNumber": "laps_completed"
     }).reset_index())
 

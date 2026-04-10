@@ -1,4 +1,4 @@
-from src.data_collection.collection_utils import collect_season_data
+from data_collection.collection_utils import collect_season_data
 
 def collect_multi_year(start: int = 2018, end: int = 2025):
     for year in range(start, end + 1):

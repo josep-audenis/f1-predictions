@@ -6,7 +6,100 @@ from unittest.mock import patch, MagicMock
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src" / "features"))
-from build_predictive_features import rolling_stat, build_round_number_map
+from build_predictive_features import rolling_stat, build_round_number_map, load_all_csvs
+
+
+# ---------------------------------------------------------------------------
+# load_all_csvs — BUG-01 regression tests
+#
+# Pathlib note: Path('/a/b') / '/c/d' == Path('/c/d')
+# Passing str(tmp_path) as `folder` makes folder_path resolve to tmp_path
+# directly, with no mocking needed.
+# ---------------------------------------------------------------------------
+
+def _write_csv(directory: Path, name: str) -> None:
+    """Write a minimal one-row CSV."""
+    (directory / name).write_text("col\n1\n")
+
+
+class TestLoadAllCsvs:
+    def test_includes_file_matching_year_in_range(self, tmp_path):
+        """A file whose name contains a year within [start, end] must be loaded."""
+        _write_csv(tmp_path, "results_2022.csv")
+        df = load_all_csvs(str(tmp_path), start=2020, end=2024)
+        assert len(df) == 1
+
+    def test_excludes_file_outside_year_range(self, tmp_path):
+        """A file whose name contains only years outside [start, end] must be excluded."""
+        _write_csv(tmp_path, "results_2017.csv")
+        with pytest.raises(FileNotFoundError):
+            load_all_csvs(str(tmp_path), start=2020, end=2024)
+
+    def test_old_bug_range_string_false_positive(self, tmp_path):
+        """
+        Regression for BUG-01.
+
+        The old code was: any(year in file.name for year in str(range(2020, 2025)))
+        str(range(2020, 2025)) == 'range(2020, 2025)'
+        Iterating over that string yields individual characters: 'r','a','n','g','e','(','2',...
+        The character '2' is present in 'results_2017.csv', so the old check would
+        accidentally load files from outside the requested year range.
+        The fix must NOT load 'results_2017.csv' when start=2020, end=2024.
+        """
+        _write_csv(tmp_path, "results_2017.csv")
+        with pytest.raises(FileNotFoundError):
+            load_all_csvs(str(tmp_path), start=2020, end=2024)
+
+    def test_loads_multiple_files_in_range(self, tmp_path):
+        """Files for years within range are all loaded and concatenated."""
+        _write_csv(tmp_path, "results_2021.csv")
+        _write_csv(tmp_path, "results_2023.csv")
+        _write_csv(tmp_path, "results_2017.csv")  # outside range — must be excluded
+        df = load_all_csvs(str(tmp_path), start=2021, end=2023)
+        assert len(df) == 2  # 1 row each from 2021 and 2023
+
+    def test_raises_if_no_files_found(self, tmp_path):
+        """FileNotFoundError when no CSV matches the year range."""
+        with pytest.raises(FileNotFoundError):
+            load_all_csvs(str(tmp_path), start=2020, end=2024)
+
+
+# ---------------------------------------------------------------------------
+# load_all_csvs pattern parameter — BUG-02 regression tests
+#
+# All CSVs live flat in data/processed/, named results_YYYY.csv / laps_YYYY.csv.
+# The old code pointed at data/raw/results and data/raw/laps (don't exist).
+# Fix: use a single shared directory + pattern="results_*.csv" / "laps_*.csv".
+# ---------------------------------------------------------------------------
+
+class TestLoadAllCsvsByPattern:
+    def test_pattern_loads_only_results(self, tmp_path):
+        """pattern='results_*.csv' must include results files and exclude laps files."""
+        _write_csv(tmp_path, "results_2022.csv")
+        _write_csv(tmp_path, "laps_2022.csv")
+        df = load_all_csvs(str(tmp_path), start=2020, end=2024, pattern="results_*.csv")
+        assert len(df) == 1
+
+    def test_pattern_loads_only_laps(self, tmp_path):
+        """pattern='laps_*.csv' must include laps files and exclude results files."""
+        _write_csv(tmp_path, "results_2022.csv")
+        _write_csv(tmp_path, "laps_2022.csv")
+        df = load_all_csvs(str(tmp_path), start=2020, end=2024, pattern="laps_*.csv")
+        assert len(df) == 1
+
+    def test_pattern_raises_when_no_matching_prefix(self, tmp_path):
+        """FileNotFoundError when files exist but none match the requested pattern."""
+        _write_csv(tmp_path, "results_2022.csv")
+        with pytest.raises(FileNotFoundError):
+            load_all_csvs(str(tmp_path), start=2020, end=2024, pattern="laps_*.csv")
+
+    def test_pattern_and_year_filter_both_apply(self, tmp_path):
+        """Only files matching both the pattern and the year range are loaded."""
+        _write_csv(tmp_path, "results_2022.csv")   # in range, right prefix  → include
+        _write_csv(tmp_path, "results_2017.csv")   # out of range            → exclude
+        _write_csv(tmp_path, "laps_2022.csv")      # in range, wrong prefix  → exclude
+        df = load_all_csvs(str(tmp_path), start=2020, end=2024, pattern="results_*.csv")
+        assert len(df) == 1
 
 
 # ---------------------------------------------------------------------------

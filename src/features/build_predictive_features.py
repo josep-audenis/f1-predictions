@@ -19,13 +19,13 @@ def build_round_number_map(years):
             rows.append({"Year": year, "GrandPrix": gp_name, "RoundNumber": int(event["RoundNumber"])})
     return pd.DataFrame(rows)
 
-def load_all_csvs(folder: str, start: int = 2018, end: int = 2025) -> pd.DataFrame:
+def load_all_csvs(folder: str, start: int = 2018, end: int = 2025, pattern: str = "*.csv") -> pd.DataFrame:
     base_path = Path(__file__).resolve().parent
     folder_path = base_path / folder
 
     all_dfs = []
-    for file in sorted(folder_path.glob("*.csv")):
-        if any(year in file.name for year in str(range(start, end+1))):
+    for file in sorted(folder_path.glob(pattern)):
+        if any(str(year) in file.name for year in range(start, end + 1)):
             print(f"Loading {file.name} ...")
             df = pd.read_csv(file)
             all_dfs.append(df)
@@ -46,8 +46,8 @@ def rolling_stat(df: pd.DataFrame, group_cols, target_col, window, func) -> pd.D
 
 def build_features(start: int = 2018, end: int = 2025, window: int = 5):
 
-    results = load_all_csvs("../../data/raw/results", start=start, end=end)
-    laps = load_all_csvs("../../data/raw/laps", start=start, end=end)
+    results = load_all_csvs("../../data/processed", start=start, end=end, pattern="results_*.csv")
+    laps = load_all_csvs("../../data/processed", start=start, end=end, pattern="laps_*.csv")
 
     results["Year"] = results["Year"].astype(int)
     laps["Year"] = laps["Year"].astype(int)
