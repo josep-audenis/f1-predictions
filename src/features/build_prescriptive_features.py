@@ -1,7 +1,10 @@
+import logging
 import pandas as pd
 from pathlib import Path
 
-DATA_DIR = Path(__file__).resolve().parent.parent / "data" 
+logger = logging.getLogger(__name__)
+
+DATA_DIR = Path(__file__).resolve().parent.parent / "data"
 
 def load_data(year: int):
 
@@ -65,7 +68,7 @@ def build_full_dataset(start_year: int, end_year: int):
     all_years = [build_driver_features(y) for y in range(start_year, end_year + 1)]
     df = pd.concat(all_years, ignore_index=True)
     df.to_csv(DATA_DIR / "processed" / "driver_features.csv", index=False)
-    print(f"Saved combined dataset with {len(df)} rows.")
+    logger.info("Saved combined dataset with %d rows.", len(df))
 
 if __name__ == "__main__":
     build_full_dataset(start_year=2018, end_year=2025)

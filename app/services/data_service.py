@@ -51,8 +51,11 @@ class DataService:
             raise
     
     
-    def load_features_for_race(self, year: str = "2025") -> pd.DataFrame:
-        features_file = settings.data_dir / "processed" / f"features_pre_race_{year}-2025.csv"
+    def load_features_for_race(self, year: str = None) -> pd.DataFrame:
+        current_year = str(datetime.now().year)
+        if year is None:
+            year = current_year
+        features_file = settings.data_dir / "processed" / f"features_pre_race_{year}-{current_year}.csv"
         
         if not features_file.exists():
             raise FileNotFoundError(f"Features file not found: {features_file}")

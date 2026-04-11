@@ -1,5 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from typing import Dict, List
+from datetime import datetime
 
 from app.services.prediction_service import PredictionService
 
@@ -16,7 +17,9 @@ async def predict_next_race():
 
 
 @router.get("/race/{year}/{grand_prix}")
-async def predict_specific_race(grand_prix: str, year: str = "2025"):
+async def predict_specific_race(grand_prix: str, year: str = None):
+    if year is None:
+        year = str(datetime.now().year)
     try:
         result = await prediction_service.get_race_predictions(grand_prix, year)
         return result

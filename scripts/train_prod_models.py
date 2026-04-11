@@ -6,6 +6,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 import joblib
 import json
+from datetime import datetime
 
 def train_production_models():
    
@@ -15,7 +16,7 @@ def train_production_models():
     print()
     
     data_dir = Path("data/processed")
-    features_file = data_dir / "features_pre_race_2018-2025.csv"
+    features_file = data_dir / f"features_pre_race_2018-{datetime.now().year}.csv"
     
     if not features_file.exists():
         print(f"Features file not found: {features_file}")

@@ -8,8 +8,9 @@
 *.joblib
 *.npy
 *.pkl
-
+.claude
 
 CLAUDE.md
 BUGS.md
+IMPROVEMENTS.md
 __pycache__

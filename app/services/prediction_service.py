@@ -6,6 +6,7 @@ from typing import Dict, List, Tuple
 from pathlib import Path
 import logging
 from sklearn.preprocessing import LabelEncoder, StandardScaler
+from datetime import datetime 
 
 from app.core.config import settings
 from app.services.data_service import DataService
@@ -140,7 +141,9 @@ class PredictionService:
         
         return joblib.load(model_full_path)
     
-    async def get_race_predictions(self, grand_prix: str, year: str = "2025") -> Dict:
+    async def get_race_predictions(self, grand_prix: str, year: str = None) -> Dict:
+        if year is None:
+            year = str(datetime.now().year)
         try:
             df = self.data_service.load_features_for_race(year)
             

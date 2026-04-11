@@ -1,7 +1,10 @@
+import logging
 import os
 import pandas as pd
 from pathlib import Path
 import fastf1
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 DATA_DIR = BASE_DIR / "data"
@@ -25,27 +28,37 @@ def get_race_data(year: int, grand_prix: str):
         results["GrandPrix"] = grand_prix
 
     except Exception as e:
-        print(f"ERROR: Failed to load {grand_prix} {year}: {e}")
+        logger.error("Failed to load %s %s: %s", grand_prix, year, e)
         return None, None
-    
+
     return laps, results
 
 
-def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR):    
+def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR, force: bool = False):
     save_dir.mkdir(parents=True, exist_ok=True)
 
     try:
         calendar = fastf1.get_event_schedule(year)
     except Exception as e:
-        print(f"ERROR: Failed to load {year} schedule: {e}")
+        logger.error("Failed to load %s schedule: %s", year, e)
         return
+
+    results_path = save_dir / f"results_{year}.csv"
+    laps_path = save_dir / f"laps_{year}.csv"
+
+    existing_gps: set = set()
+    if not force and results_path.exists():
+        existing_gps = set(pd.read_csv(results_path)["GrandPrix"].unique())
 
     laps_all = []
     results_all = []
 
-    print(f"Collecting data for {year} season...")
+    logger.info("Collecting data for %s season...", year)
     for gp in calendar["EventName"]:
-        print(f" - {gp}")
+        if gp in existing_gps:
+            logger.info(" - %s (cached, skipping)", gp)
+            continue
+        logger.info(" - %s", gp)
         laps, results = get_race_data(year, gp)
         if laps is not None:
             laps_all.append(laps)
@@ -53,8 +66,15 @@ def collect_season_data(year: int, save_dir: Path = PROCESSED_DIR):
             results_all.append(results)
 
     if laps_all:
-        pd.concat(laps_all).to_csv(os.path.join(save_dir, f"laps_{year}.csv"), index=False)
-    if results_all:
-        pd.concat(results_all).to_csv(os.path.join(save_dir, f"results_{year}.csv"), index=False)
+        new_laps = pd.concat(laps_all)
+        if not force and laps_path.exists():
+            new_laps = pd.concat([pd.read_csv(laps_path), new_laps], ignore_index=True)
+        new_laps.to_csv(laps_path, index=False)
 
-    print(f"Saved data for {year} season")
+    if results_all:
+        new_results = pd.concat(results_all)
+        if not force and results_path.exists():
+            new_results = pd.concat([pd.read_csv(results_path), new_results], ignore_index=True)
+        new_results.to_csv(results_path, index=False)
+
+    logger.info("Saved data for %s season", year)

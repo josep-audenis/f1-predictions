@@ -1,5 +1,8 @@
+import logging
 import numpy as np
 import joblib
+
+logger = logging.getLogger(__name__)
 from sklearn.metrics import accuracy_score, f1_score
 from sklearn.model_selection import cross_val_score
 from sklearn.ensemble import RandomForestClassifier, GradientBoostingClassifier
@@ -61,6 +64,6 @@ def evaluate_models(X_train, X_test, y_train, y_test, X_full, y_full, model_dir,
 
         results[name] = result
         cv_str = f", cv_acc={result['cv_accuracy_mean']:.3f}±{result['cv_accuracy_std']:.3f}" if "cv_accuracy_mean" in result else ""
-        print(f"{name} done: acc={acc:.3f}, f1_macro={f1_macro:.3f}{cv_str}")
+        logger.info("%s done: acc=%.3f, f1_macro=%.3f%s", name, acc, f1_macro, cv_str)
 
     return results

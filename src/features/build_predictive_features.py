@@ -1,8 +1,11 @@
+import logging
 import os
 import fastf1
 import pandas as pd
 import numpy as np
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_DIR = os.path.join(BASE_DIR, "..", "..", "data", "processed")
@@ -26,7 +29,7 @@ def load_all_csvs(folder: str, start: int = 2018, end: int = 2025, pattern: str 
     all_dfs = []
     for file in sorted(folder_path.glob(pattern)):
         if any(str(year) in file.name for year in range(start, end + 1)):
-            print(f"Loading {file.name} ...")
+            logger.info("Loading %s ...", file.name)
             df = pd.read_csv(file)
             all_dfs.append(df)
 
@@ -111,19 +114,18 @@ def build_features(start: int = 2018, end: int = 2025, window: int = 5):
 
     df_final = results[feature_cols]
     df_final.to_csv(os.path.join(OUTPUT_PATH, f"features_pre_race_{start}-{end}.csv"), index=False)
-    print(f"Saved features to {OUTPUT_PATH}.")
+    logger.info("Saved features to %s.", OUTPUT_PATH)
 
     return df_final
 
 
 
 if __name__ == "__main__":
-    
-    start = 2018 
-    end = 2025
+    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s — %(message)s")
+    from datetime import datetime
+    start = 2018
+    end = datetime.now().year
     assert start > 2017, "[WARNING] FastF1API only has detailed data from 2018"
-    
-
 
     for i in range(start, end + 1):
         build_features(start=i, end=end)
