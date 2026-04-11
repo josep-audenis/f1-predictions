@@ -28,7 +28,7 @@ def extract_lap_features(laps: pd.DataFrame) -> pd.DataFrame:
         "SpeedI1": "mean",
         "SpeedFL": "max",
         "IsAccurate": "mean",
-        "Compound": lambda x: x.mode().iloc[0] if len(x.mode()) > 0 else None,
+        "Compound": lambda x: m.iloc[0] if len(m := x.mode()) > 0 else None,
         "Stint": "max",
         "LapNumber": "count"
     }).rename(columns={

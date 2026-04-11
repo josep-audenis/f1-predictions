@@ -65,10 +65,11 @@ def main():
 
         final_results[tag] = evaluate_models(X_train, X_test, y_train, y_test, X_full, y, MODEL_DIR, prefix=f"{tag}_top3_quali")
 
-    with open(OUTPUT_DIR / "model_performance_top3_quali.json", "w") as f:
+    output_file = OUTPUT_DIR / "model_performance_top3_quali.json"
+    with open(output_file, "w") as f:
         json.dump(final_results, f, indent=4)
 
-    print("\nResults saved to model_performance.json")
+    print(f"\nResults saved to {output_file}")
 
 if __name__ == "__main__":
     main()
